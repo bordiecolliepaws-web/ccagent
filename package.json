@@ -1,0 +1,15 @@
+{
+  "name": "ccagent",
+  "version": "0.1.0",
+  "description": "Constitutional Coding for AI Agents",
+  "type": "module",
+  "bin": {
+    "ccagent": "./bin/ccagent.js"
+  },
+  "scripts": {
+    "start": "node ./bin/ccagent.js"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  }
+}
