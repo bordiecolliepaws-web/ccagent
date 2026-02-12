@@ -1,63 +1,54 @@
-# ccagent
+# Make It So 🖖
 
-**Constitutional Coding for AI Agents** — a design intent preservation framework.
+> **Charter. Explore. Engage.** — From intent to product in three phases.
 
-## Problem
+Ralph Wiggum keeps coding until it's done. **Make It So** tells Ralph *what matters* before it starts.
 
-AI coding agents (Codex, Claude Code, Cursor, etc.) are great at writing code but terrible at preserving *why* code was written that way. They'll refactor your carefully designed abstraction into spaghetti because they optimized for the immediate task, not the architecture.
+## The Problem
 
-## Solution
+You can vibe-code small things. You can write a PRD and run a Ralph loop for medium things. But for anything real, someone has to do the hard design work — architecture, trade-offs, UI spec, test strategy. That someone is usually you, exhausted at 2 AM.
 
-Give your codebase a **constitution** — a living document that captures design intent, invariants, and architectural decisions. Agents read it before changing code, check alignment, and propose amendments when they need to evolve the design.
+## The Solution
 
-## How It Works
+Make It So splits the work into three phases with decreasing human involvement:
 
 ```
-1. INIT     → Create a constitution for your project
-2. READ     → Agent reads constitution before any change
-3. CHECK    → Validate proposed changes against principles
-4. AMEND    → If design needs to evolve, propose an amendment
-5. COMMIT   → Changes + constitution updates ship together
+human thoughts ──Charter──▶ CHARTER ──Explore──▶ BLUEPRINT ──Engage──▶ PRODUCT
 ```
+
+### Phase 0: Charter
+**You + Agent define what matters.** Vision, constraints, non-negotiables. Not *how* to build it — *why* it matters and *what* must be true.
+
+### Phase 1: Explore
+**Agent explores the design space.** Returns multiple blueprint options — different architectures, trade-offs, approaches. You pick one (or say "try again"). Agent refines into a full blueprint.
+
+### Phase 2: Engage
+**Ralph loop builds it.** The blueprint feeds directly into a Ralph Wiggum loop. Agent codes autonomously until all stories pass.
 
 ## Quick Start
 
 ```bash
-# Add ccagent to your project
-cp -r templates/constitution/ your-project/constitution/
+# Clone and link
+git clone https://github.com/bordiecolliepaws-web/ccagent.git
+cd ccagent && npm install && npm link
 
-# Or use the init script
-./scripts/init.sh /path/to/your-project
+# In your project:
+makeitso charter "Build an offline-first task manager for mobile"
+makeitso explore
+makeitso engage
 ```
 
-Then add to your agent's instructions (AGENTS.md, .cursorrules, etc.):
-```
-Before modifying code, read constitution/CONSTITUTION.md.
-Check your changes against the principles and invariants.
-If your change conflicts with the constitution, propose an amendment before proceeding.
-```
+## Why "Make It So"?
 
-## Constitution Structure
+Captain Picard doesn't tell his crew how to reroute the plasma conduits. He sets the directive and says "Make it so." The crew figures out the rest.
 
-```
-constitution/
-├── CONSTITUTION.md      # Core principles & architectural vision
-├── invariants.md        # Things that must NEVER be violated
-├── modules/             # Per-module design intent
-│   └── {module}.md
-├── decisions/           # Architectural Decision Records (ADRs)
-│   └── 001-{title}.md
-└── amendments/          # Proposed & accepted changes to the constitution
-    └── 001-{title}.md
-```
+That's what this does. You set the charter. The agent explores, plans, and builds. You steer — you don't row.
 
-## For Agent Developers
+## Docs
 
-See [docs/agent-integration.md](docs/agent-integration.md) for how to wire ccagent into your coding agent's workflow.
-
-## Philosophy
-
-Code tells you *what*. Comments tell you *how*. A constitution tells you ***why*** — and keeps agents accountable to that intent.
+- [Design Document](docs/design.md) — Full architecture and rationale
+- [Philosophy](docs/philosophy.md) — Why this approach
+- [Agent Integration](docs/agent-integration.md) — Wiring into coding agents
 
 ## License
 

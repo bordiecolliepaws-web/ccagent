@@ -1,6 +1,12 @@
-# ccagent Design Document
+# Make It So — Design Document
 
-> Constitutional Coding for AI Agents — the full pipeline from intent to code.
+> From intent to product in three phases: **Charter. Explore. Engage.**
+
+## The Name
+
+In Star Trek, Captain Picard doesn't tell his crew *how* to reroute the plasma conduits. He sets the **directive** — the mission and the principles that must not be violated. Then he says **"Make it so."**
+
+The Make It So technique applies this to AI coding. Instead of writing a detailed PRD yourself, you define your **charter**, let the agent **explore** approaches, pick one, and say **engage**.
 
 ## The Problem
 
@@ -9,274 +15,200 @@ AI coding has evolved through phases:
 | Phase | Flow | Problem |
 |-------|------|---------|
 | **Vibe coding** | command → agent codes | No design. Agent does whatever. |
-| **Plan mode** | command → agent plans → agent codes | Plan is ephemeral, doesn't persist as guardrail. |
+| **Plan mode** | command → agent plans → codes | Plan is ephemeral, doesn't persist. |
 | **Spec-driven** | human writes spec → agent codes | Human does all the design work. Exhausting. |
-| **Ralph loop** | human writes PRD → loop(agent codes) | Better execution, but PRD is still human-authored. Design still front-loaded on human. |
+| **Ralph loop** | human writes PRD → loop(agent codes) | Better execution, but PRD is still human-authored. |
 
 The common failure: either the **human is exhausted** writing detailed specs, or the **agent drifts** because there's no persistent design constraint.
 
-## The Solution: Two Loops
-
-ccagent splits the workflow into two distinct loops:
+## The Solution: Three Phases
 
 ```
-Loop 1 (Design):     command <-> constitution + PRD + stories
-Loop 2 (Build):      constitution + PRD + stories <-> coding
+human thoughts ──Charter──▶ CHARTER ──Explore──▶ BLUEPRINT ──Engage──▶ PRODUCT
 ```
-
-**Loop 1** is our innovation. **Loop 2** follows Ralph loop best practices.
-
----
-
-## Loop 1: The Design Loop
-
-### Core Insight: Hierarchical Decision-Making
-
-Not all decisions need human involvement. ccagent uses a **constitutional hierarchy** where human involvement decreases at each level:
-
-```
-LEVEL              WHO DECIDES              WHAT IT CONTAINS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-L1: Principles     Human writes             Vision, values, non-negotiables
-        ↓
-L2: Objectives     Human approves           Architecture, major tech choices
-        ↓
-L3: Implementation Agent decides,           Module design, data models, APIs
-                   human can review
-        ↓
-L4: Fine Details   Agent locks in           Naming, file structure, test
-                   silently                 strategy, coding style
-```
-
-Each level **constrains** the level below it:
-- Principles constrain objectives
-- Objectives constrain implementation
-- Implementation constrains fine details
-
-**The agent generates ALL levels**, but only escalates to the human based on the level. The human never has to think about fine details unless they choose to.
-
-### How It Works
-
-**Step 1: Human provides intent (L1)**
-
-```
-"Build a task manager with offline sync that never loses data"
-```
-
-**Step 2: Agent generates the full hierarchy**
-
-The agent drafts all four levels at once:
-
-```
-📜 L1 PRINCIPLES (need your approval):
-  1. Offline-first: app works without internet
-  2. Eventually consistent sync (not real-time)
-  3. Zero data loss guarantee
-
-🎯 L2 OBJECTIVES (proposing, please review):
-  - Event sourcing for state management
-  - SQLite for local storage
-  - WebSocket sync when online
-  - React Native for cross-platform mobile
-
-🔧 L3 IMPLEMENTATION (I've decided, expand to review):
-  - EventStore class with append-only log
-  - Sync engine with conflict resolution via last-write-wins
-  - Offline queue with retry logic
-  ... (12 more decisions)
-
-⚙️ L4 FINE DETAILS (locked in):
-  - 47 decisions covering naming, structure, tests
-  - [expand if curious]
-```
-
-**Step 3: Human steers, agent adjusts**
-
-```
-Human: "Principles yes. But use plain event log, not SQLite."
-Agent:  Updated L2. Cascading changes: L3 adjusted (8 decisions),
-        L4 adjusted (23 decisions). Ready to review?
-Human: "Looks good. Build it."
-```
-
-The human touched **3 principles + 1 objective**. The agent autonomously locked in **59 implementation decisions**. Nobody got tired. Intent is fully preserved.
-
-### The Constitution as Output
-
-Loop 1 produces a **constitution directory**:
-
-```
-constitution/
-├── CONSTITUTION.md          # L1 + L2: Principles and approved objectives
-├── invariants.md            # Hard constraints extracted from L1
-├── architecture.md          # L2: Approved architectural decisions
-├── modules/                 # L3: Per-module implementation intent
-│   ├── event-store.md
-│   ├── sync-engine.md
-│   └── offline-queue.md
-├── conventions.md           # L4: Coding style, naming, structure
-├── decisions/               # ADRs for all non-trivial choices
-│   ├── 001-event-sourcing.md
-│   ├── 002-plain-event-log.md
-│   └── ...
-└── amendments/              # Changes made during Loop 1 refinement
-```
-
-Plus a **PRD** (`prd.json`) with stories derived from the constitution:
-
-```json
-{
-  "name": "task-manager",
-  "branchName": "feature/task-manager",
-  "stories": [
-    {
-      "id": 1,
-      "title": "Event store foundation",
-      "description": "Implement append-only event log...",
-      "acceptance": ["Events persist across app restart", "..."],
-      "constitutional_refs": ["L1.3 (zero data loss)", "L2.1 (event sourcing)"],
-      "priority": 1,
-      "passes": false
-    }
-  ]
-}
-```
-
-Note: each story references the constitutional principles it serves. This creates traceability from code back to intent.
-
-### The Design Loop Conversation
-
-The back-and-forth (`<->`) is iterative:
-
-```
-Human intent
-    ↓
-Agent generates full hierarchy (L1-L4)
-    ↓
-Human reviews L1 (principles) ←── must approve
-    ↓
-Human reviews L2 (objectives) ←── should approve
-    ↓
-Human optionally reviews L3-L4 ←── can skip
-    ↓
-Human requests changes at any level
-    ↓
-Agent cascades changes downward
-    ↓
-Repeat until human says "build it"
-    ↓
-Constitution + PRD locked → Loop 2 begins
-```
-
-Key properties:
-- **Changes cascade downward.** Changing a principle can reshape everything below it.
-- **Lower levels auto-adjust.** The human doesn't need to manually update L4 when L1 changes.
-- **The agent explains trade-offs.** "If we drop SQLite, we lose X but gain Y."
-- **Nothing is hidden.** Every level is reviewable, but only L1-L2 demand attention.
-
----
-
-## Loop 2: The Build Loop
-
-Loop 2 follows established Ralph loop patterns with constitutional enforcement.
-
-### Each Iteration
-
-```
-1. Fresh agent context spawned
-2. Agent reads:
-   - constitution/ (design intent)
-   - prd.json (what to build next)
-   - progress.txt (what's been done)
-3. Agent picks highest-priority incomplete story
-4. Agent implements the story
-5. Agent runs quality checks (tests, types, lint)
-6. POST-VALIDATION: constitutional check
-   - Does the diff violate any invariants?
-   - Does the implementation match module intent?
-   - Did design intent drift?
-7. If violation → revert, log reason, retry
-   If clean → commit, update progress
-8. If design legitimately needs to evolve → propose amendment
-9. Repeat until all stories pass
-```
-
-### Constitutional Validation
-
-After each iteration, a validation step checks the code changes against the constitution:
 
 ```bash
-ccagent check --diff <git-diff> --constitution constitution/
+makeitso charter "Build an offline-first task manager"
+makeitso explore
+makeitso engage
 ```
 
-This is an LLM-powered check that:
-- Reads the diff
-- Reads the relevant constitutional documents
-- Returns PASS/FAIL with reasoning
-- Suggests amendments if the constitution itself should evolve
+### Phase 0: Charter
 
-### Amendments During Build
+**Human + Agent define what matters.**
 
-Sometimes the agent discovers that the constitution needs to change mid-build. The amendment process:
+The charter captures intent, constraints, and success criteria — NOT implementation details. It's what a founder would tell a CTO on day one.
 
-1. Agent creates `amendments/NNN-title.md`
-2. Describes what needs to change and why
-3. **L1-L2 amendments** → pause and ask human
-4. **L3-L4 amendments** → agent can self-approve, logged for review
-5. Constitution updated, build continues
+**What's in the charter:**
+- **Vision** — What are we building and why?
+- **Core constraints** — Must-haves (offline-first, must use React, etc.)
+- **Non-negotiables** — Hard invariants (zero data loss, sub-2s load, etc.)
+- **Boundaries** — What it is NOT, scope limits
+- **Audience** — Who is this for?
+- **Success criteria** — How do we know it's done?
+
+**How it works:**
+- Human provides initial intent (natural language)
+- Agent asks clarifying questions
+- Back and forth until charter is locked
+- Output: `charter/` directory
+
+**Human involvement: HIGH** — this is the steering wheel.
+
+### Phase 1: Explore
+
+**Agent autonomously explores the design space.**
+
+The agent takes the charter and explores multiple approaches — different architectures, tech stacks, trade-offs. It comes back with **options**, not a single answer.
+
+**How it works:**
+1. Agent reads the charter
+2. Agent explores multiple directions
+3. Returns 2-3 blueprint options, each with:
+   - Architecture approach
+   - Tech stack choices
+   - Trade-off analysis
+   - Rough story breakdown
+4. Human picks one (or says "try again with feedback")
+5. Agent refines the chosen direction into a full blueprint
+6. Repeat until human approves
+
+**The explore loop:**
+```
+Charter
+   ↓
+Explore (run 1) → Option A: React + SQLite + event sourcing
+                → Option B: Vue + IndexedDB + CRDT
+                → Option C: Svelte + PouchDB + sync engine
+   ↓
+Human: "B is close but use React instead of Vue"
+   ↓
+Explore (run 2) → Option B': React + IndexedDB (refined)
+                → Option B'': React + IndexedDB + service worker variant
+   ↓
+Human: "B' looks good, lock it in"
+   ↓
+Blueprint locked
+```
+
+**The blueprint (Phase 1 output) contains:**
+- `prd.json` — User stories with acceptance criteria (Ralph-compatible)
+- `architecture.md` — Tech stack, data models, APIs, system design
+- `ui-spec.md` — Screens, components, layout, user flows
+- `conventions.md` — Coding style, patterns, naming, file structure
+- `test-strategy.md` — What to test, how, coverage expectations
+- `CLAUDE.md` / `AGENTS.md` — Agent instructions for the build phase
+- `progress.txt` — Empty, ready for Ralph
+
+**Human involvement: LOW** — agent explores, human selects direction.
+
+### Phase 2: Engage (Ralph Loop)
+
+**Agent builds it autonomously.**
+
+This phase IS a Ralph Wiggum loop. No need to reinvent it. The agent takes the blueprint and codes iteratively until all stories pass.
+
+**How it works:**
+- Each iteration: fresh agent context
+- Agent reads: blueprint + prd.json + progress.txt
+- Picks highest-priority incomplete story
+- Implements it, runs quality checks
+- Commits if checks pass, updates progress
+- Repeats until all stories done
+
+**Human involvement: NEAR ZERO** — fully autonomous.
+
+**What Make It So adds to Ralph:**
+- The charter persists as a guardrail across all iterations
+- Each iteration can be validated against charter constraints
+- If the agent discovers the blueprint needs to change, it can propose amendments (escalating to human for charter-level changes)
 
 ---
 
-## What Makes This Different
+## The Key Insight
 
-| Approach | Design Effort (Human) | Design Effort (Agent) | Persistent Guardrails | Autonomous Detail |
-|----------|----------------------|----------------------|----------------------|-------------------|
-| Vibe coding | None | None | ❌ | ❌ |
-| Plan mode | Medium | Medium | ❌ (ephemeral) | ❌ |
-| Spec-driven | High | Low | ⚠️ (static doc) | ❌ |
-| Ralph loop | High (PRD) | Low | ⚠️ (progress.txt) | ❌ |
-| **ccagent** | **Low (L1-L2 only)** | **High (L1-L4)** | **✅ (constitution)** | **✅ (L3-L4)** |
+```
+Ralph Wiggum:  PRD → loop(code)         Human writes the plan.
+Make It So:    Charter → Explore → Ralph  Agent explores the plan.
+```
 
-The key insight: **the agent does the design work, the human provides the intent.** The constitution ensures the agent's design decisions persist and constrain the coding loop, even across fresh contexts.
+Ralph keeps coding until it's done.
+Make It So tells Ralph *what matters* before it starts.
+
+The human's job shrinks from "write a detailed PRD" to "tell me what you care about and pick a direction." The agent does the rest.
 
 ---
 
-## Implementation Plan
+## Comparison with Other Frameworks
 
-### Phase 1: Core Framework
-- [ ] `ccagent init <description>` — Generate constitution from natural language intent
-- [ ] Constitutional hierarchy (L1-L4) generation
-- [ ] Interactive refinement loop (human steers, agent adjusts)
-- [ ] Constitution directory output
+| Framework | Phase 0 (Intent) | Phase 1 (Design) | Phase 2 (Build) | Agent Autonomy |
+|-----------|------------------|-------------------|-----------------|----------------|
+| Vibe coding | ❌ | ❌ | Agent codes | Unguided |
+| Plan mode | ❌ | Human + Agent plan | Agent codes | Low |
+| Spec Kit | Human writes spec | 4-phase gated process | Agent codes | Medium |
+| BMAD | Human briefs | Multi-agent planning (PM, Architect) | Agent codes | Medium |
+| Ralph | Human writes PRD | ❌ | Loop(agent codes) | High (execution only) |
+| **Make It So** | **Human + Agent lock charter** | **Agent explores options, human selects** | **Ralph loop** | **High (design + execution)** |
 
-### Phase 2: Build Integration
-- [ ] `ccagent build` — Ralph-style loop with constitutional validation
-- [ ] `ccagent check` — Validate diff against constitution
-- [ ] Amendment workflow during build
-- [ ] Progress tracking with constitutional references
+---
 
-### Phase 3: Agent Integration
-- [ ] Claude Code integration (CLAUDE.md / AGENTS.md)
-- [ ] Codex integration
-- [ ] Cursor integration (.cursorrules)
-- [ ] MCP tool server (expose constitution as tools)
+## Implementation
 
-### Phase 4: Evolution
-- [ ] Multi-project constitutions (shared principles across repos)
-- [ ] Constitution analytics (which principles get amended most?)
-- [ ] Learning from amendments (improve future constitution generation)
+### CLI
+
+```bash
+# Phase 0: Define the charter (interactive)
+makeitso charter "Build an offline-first task manager for mobile"
+
+# Phase 1: Explore approaches (agent-driven, returns options)
+makeitso explore                    # first run
+makeitso explore --feedback "use React, not Vue"  # refine
+
+# Phase 2: Build it (Ralph loop)
+makeitso engage                     # default 10 iterations
+makeitso engage --iterations 20     # more iterations
+makeitso engage --agent claude      # use Claude Code instead of Codex
+```
+
+### File Structure (in user's project)
+
+```
+my-project/
+├── charter/                    # Phase 0 output
+│   ├── CHARTER.md             # Vision, constraints, non-negotiables
+│   ├── boundaries.md          # Scope limits, what it's NOT
+│   └── success-criteria.md    # How we know it's done
+├── blueprint/                  # Phase 1 output
+│   ├── prd.json               # Stories for Ralph
+│   ├── architecture.md        # System design
+│   ├── ui-spec.md             # UI/UX spec
+│   ├── conventions.md         # Coding patterns
+│   ├── test-strategy.md       # Testing approach
+│   └── CLAUDE.md              # Agent instructions
+├── progress.txt               # Ralph's memory
+└── src/                       # Phase 2 output (the code)
+```
+
+### Agent Support
+
+Works with any CLI-based coding agent:
+- **Codex** (`codex exec --full-auto`)
+- **Claude Code** (`claude -p --dangerously-skip-permissions`)
+- **Amp** (via Ralph's existing integration)
 
 ---
 
 ## Prior Art & Influences
 
-- **Ralph Wiggum Loop** (Geoffrey Huntley) — The execution model. Fresh context per iteration, PRD-driven, progress tracking. ccagent adopts this for Loop 2.
-- **Spec-driven development** (GitHub spec-kit, Addy Osmani) — Write specs before coding. ccagent automates spec generation and adds persistence.
-- **Constitutional AI** (Anthropic) — Principles-based self-governance. ccagent applies this concept to code architecture instead of AI safety.
-- **GTPlanner** (OpenSQZ) — PRD generation for agents. ccagent goes further: generates constitution + PRD, with hierarchical human involvement.
-- **Plan Mode** (Claude Code) — Read-only planning before execution. ccagent makes the plan persistent and enforceable.
+- **Ralph Wiggum Loop** (Geoffrey Huntley) — Phase 2's execution model. Fresh context per iteration, PRD-driven, progress tracking.
+- **BMAD Method** — Multi-agent planning with personas (PM, Architect). Closest existing framework, but agents follow roles, not principles.
+- **GitHub Spec Kit** — 4-phase gated development. Human-driven throughout.
+- **Devin Interactive Planning** — AI generates a roadmap before coding, but single-path, no exploration.
+- **Spec-driven development** (Addy Osmani) — Plan before code. Make It So automates the planning.
+- **Anthropic Constitutional AI** — Principles-based self-governance. Inspiration for charter as persistent constraint.
 
 ---
 
 *Authors: Jimmy & Bordie 🐕*
 *Created: 2026-02-11*
+*Updated: 2026-02-12 — renamed to Make It So, 3-phase architecture*
